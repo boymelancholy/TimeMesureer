@@ -1,5 +1,5 @@
 # time-mesureer
-Make useful handle scheduler as countdown.
+Make useful scheduler to handle countdown.  
 This is virion library.
 
 # How to use
@@ -35,7 +35,7 @@ class EventListener implements Listener {
 
         /** @var string $actionName */
         $actionName = $event->getActionName();
-        if ($actionName === "AnyText") {
+        if ($actionName === 'AnyText') {
 
             /** @var int $time */
             $time = $event->getCurrentTime();
@@ -43,7 +43,7 @@ class EventListener implements Listener {
             /** @var Player[] $viewers */
             $viewers = $event->getViewers();
             foreach ($viewers as $player) {
-                $player->sendMessage("TIME: ".$time);
+                $player->sendMessage('TIME: '.$time);
             }
 
             // If you set $delay as "false", you can use this method.
