@@ -1,0 +1,10 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/boymelancholy/timemesureer
+build-by-default: true
+branches:
+- main
+projects:
+  timemesureer:
+    path: boymelancholy/timemesureer
+    type: library
+    model: virion
+...
