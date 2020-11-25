@@ -3,4 +3,4 @@ antigen: boymelancholy\timemesureer
 version: 0.1.0
 api: [3.0.0]
 author: boymelancholy
-description: Make easily and useful handle a countdown
+description: Make easily and useful handle a scheduler as countdown
