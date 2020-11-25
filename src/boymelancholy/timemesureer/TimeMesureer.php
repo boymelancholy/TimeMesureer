@@ -109,6 +109,5 @@ class TimeMesureer {
      */
     public function kill() {
         $this->handler->cancel();
-        unset($this);
     }
 }
