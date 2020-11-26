@@ -4,22 +4,7 @@ declare(strict_types=1);
 
 namespace boymelancholy\timemesureer;
 
-use pocketmine\event\Event;
-use pocketmine\scheduler\TaskHandler;
-
-class MesureerProcessEvent extends Event {
-
-    /** @var string */
-    private $name;
-
-    /** @var int */
-    private $time;
-
-    /** @var TaskHandler */
-    private $handler;
-
-    /** @var array */
-    private $viewers;
+class MesureerProcessEvent extends MesureerEvent {
 
     /** @var TimeMesureer */
     private $timeMesureer;
@@ -30,44 +15,18 @@ class MesureerProcessEvent extends Event {
      * @param TimeMesureer $timeMesureer
      */
     public function __construct(TimeMesureer $timeMesureer) {
-        $this->name = $timeMesureer->getName();
-        $this->time = $timeMesureer->getTime();
-        $this->handler = $timeMesureer->getHandler();
-        $this->viewers = $timeMesureer->getViewers();
+        parent::__construct(
+            $timeMesureer->getName(),
+            $timeMesureer->getTime(),
+            $timeMesureer->getViewers()
+        );
         $this->timeMesureer = $timeMesureer;
     }
 
     /**
-     * Get handle-task name (action name)
-     *
-     * @return string
-     */
-    public function getActionName(): string {
-        return $this->name;
-    }
-
-    /**
-     * Get current task time
-     *
-     * @return int
-     */
-    public function getCurrentTime(): int {
-        return $this->time;
-    }
-
-    /**
-     * Get watching players
-     *
-     * @return array
-     */
-    public function getViewers(): array {
-        return $this->viewers;
-    }
-
-    /**
-     * Cancel task
+     * Kill a task
      */
     public function kill(): void{
-        $this->timeMesureer->kill();
+        $this->timeMesureer = null;
     }
 }

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace boymelancholy\timemesureer;
 
+use pocketmine\Player;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\scheduler\TaskHandler;
-use pocketmine\plugin\PluginBase;
+use pocketmine\scheduler\TaskScheduler;
 
-class TimeMesureer {
+class TimeMesureer extends MesureerContainer {
 
     /** @var int */
     private $time;
@@ -16,47 +17,114 @@ class TimeMesureer {
     /** @var string */
     private $name;
 
+    /** @var int */
+    private $period;
+
+    /** @var bool */
+    private $delay;
+
     /** @var TaskHandler */
     private $handler;
 
     /** @var array */
-    private $viewers = [];
+    private $viewers;
+
+    /** @var TaskScheduler */
+    private $scheduler;
+
+    /** @var bool */
+    private $enabled;
 
     /**
      * TimeMesureer constructor.
      *
      * @param string $name Set any action name.
-     * @param int $initTime Set process time.
-     * @param array|null $viewers Set players who can get time.
+     * @param TaskScheduler $scheduler
      */
-    public function __construct(string $name, int $initTime, array $viewers = null) {
+    public function __construct(string $name, TaskScheduler $scheduler) {
         $this->name = $name;
-        $this->time = $initTime;
-        if ($viewers !== null) {
-            $this->viewers = $viewers;
-        }
+        $this->time = 0;
+        $this->period = 20;
+        $this->delay = false;
+        $this->viewers = [];
+        $this->scheduler = $scheduler;
     }
 
     /**
      * Run a TimeMesureer.
-     *
-     * @param PluginBase $plugin
-     * @param int $period Sets ticks for when to process. (default is 1*20)
-     * @param bool $delay If you wanna stop the task in time is 0, please set this true.
      */
-    public function run(PluginBase $plugin, int $period = 20, bool $delay = false) {
-        $this->handler = $plugin->getScheduler()->scheduleRepeatingTask(new ClosureTask(
-            function (int $currentTick) use ($delay): void {
-                $this->setTime(--$this->time);
+    public function run() {
+        $this->handler = $this->scheduler->scheduleRepeatingTask(new ClosureTask(
+            function (int $currentTick): void {
                 $ev = new MesureerProcessEvent($this);
                 $ev->call();
-                if ($delay) {
-                    if ($this->time == 0) {
-                        $this->kill();
+                if ($this->delay) {
+                    $this->setTime(--$this->time, false);
+                    if ($this->time == -1) {
+                        $this->handler->cancel();
+                        $ev = new MesureerDeadEvent(
+                            $this->name,
+                            $this->time,
+                            $this->viewers
+                        );
+                        $ev->call();
+                        self::del($this->name);
                     }
                 }
             }
-        ), $period);
+        ), $this->period);
+
+        self::set($this->name, $this);
+        $this->enabled = true;
+    }
+
+    /**
+     * Set current time
+     *
+     * @param int $time
+     * @param bool $update
+     * @return TimeMesureer
+     */
+    public function setTime(int $time, $update = true): self {
+        $this->time = $time;
+        if ($update) $this->update();
+        return $this;
+    }
+
+    /**
+     * Set tick period
+     *
+     * @param int $period
+     * @return TimeMesureer
+     */
+    public function setPeriod(int $period): self {
+        $this->period = $period;
+        $this->update();
+        return $this;
+    }
+
+    /**
+     * Set this task is delay
+     *
+     * @param bool $delay
+     * @return TimeMesureer
+     */
+    public function setDelay(bool $delay = false): self {
+        $this->delay = $delay;
+        $this->update();
+        return $this;
+    }
+
+    /**
+     * Set this task is delay
+     *
+     * @param Player[] $viewers
+     * @return TimeMesureer
+     */
+    public function setViewers(array $viewers = []): self {
+        $this->viewers = $viewers;
+        $this->update();
+        return $this;
     }
 
     /**
@@ -69,30 +137,12 @@ class TimeMesureer {
     }
 
     /**
-     * Set current time
-     *
-     * @param int $val
-     */
-    public function setTime(int $val) {
-        $this->time = $val;
-    }
-
-    /**
      * Get action name
      *
      * @return string
      */
     public function getName(): string {
         return $this->name;
-    }
-
-    /**
-     * Get TaskHandler
-     *
-     * @return TaskHandler
-     */
-    public function getHandler(): TaskHandler {
-        return $this->handler;
     }
 
     /**
@@ -105,9 +155,35 @@ class TimeMesureer {
     }
 
     /**
-     * Kill process of TimeMesureer
+     * Update
+     */
+    private function update() {
+        self::set($this->name, $this);
+        if ($this->enabled) {
+            $this->handler->cancel();
+            $this->run();
+        }
+    }
+
+    /**
+     * Kill this handler and mesureer
      */
     public function kill() {
+        $this->__destruct();
+    }
+
+    /**
+     * Magic method, destruct
+     */
+    public function __destruct() {
         $this->handler->cancel();
+        $ev = new MesureerDeadEvent(
+            $this->name,
+            $this->time,
+            $this->viewers
+        );
+        $ev->call();
+
+        self::del($this->name);
     }
 }
