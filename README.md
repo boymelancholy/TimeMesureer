@@ -54,3 +54,8 @@ class EventListener implements Listener {
     }
 }
 ```
+
+# Scheduled to be updated
+- [ ] Add TimeMesureer container. (will be able to access in static)  
+- [ ] Add task mode. (RepeatingTask or DelayedTask)  
+- [ ] Fix exceeding the minimum value. (in setting $initTime to 0, this time is to be -1 * PHP_INT_MAX)
